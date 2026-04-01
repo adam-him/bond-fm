@@ -1,36 +1,17 @@
 # BOND FM
 
-A lightweight music sharing site. Upload tracks, listen to what others have shared.
+Lightweight music sharing. Upload tracks, listen to what others shared.
 
 ## Stack
 
-- Next.js 14 (App Router)
-- TypeScript
-- Tailwind CSS
-- Vercel Blob (audio + metadata storage)
-
-## Setup
-
-1. Clone & install
-
-```bash
-npm install
-```
-
-2. Create a Vercel Blob store (vercel.com → your project → Storage → Blob), then add to `.env.local`:
-
-```
-BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
-```
-
-3. Run locally
-
-```bash
-npm run dev
-```
+- Cloudflare Pages (static frontend)
+- Cloudflare Pages Functions (API)
+- Cloudflare R2 (audio + metadata storage)
 
 ## Deploy
 
-Push to GitHub, import in Vercel. Add `BLOB_READ_WRITE_TOKEN` in project settings → Environment Variables.
+```bash
+wrangler pages deploy public --project-name bond-fm
+```
 
-That's it.
+Add R2 binding `BUCKET → bond-fm` in the Cloudflare Pages dashboard.

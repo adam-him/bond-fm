@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BOND FM</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111111;
+      --border: #222222;
+      --text: #e5e7eb;
+      --muted: #6b7280;
+      --accent: #a855f7;
+      --accent-hover: #9333ea;
+      --danger: #ef4444;
+      --success: #a855f7;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    main {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 48px 20px 80px;
+    }
+
+    header {
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #fff;
+    }
+
+    .tagline {
+      color: var(--muted);
+      margin-top: 4px;
+      font-size: 13px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    section { margin-bottom: 48px; }
+
+    /* Drop zone */
+    #dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      user-select: none;
+    }
+
+    #dropzone:hover, #dropzone.drag-over {
+      border-color: var(--accent);
+      background: rgba(168, 85, 247, 0.06);
+    }
+
+    #dropzone.has-file {
+      border-color: #6b21a8;
+      background: rgba(168, 85, 247, 0.05);
+    }
+
+    #dropzone p { color: var(--muted); font-size: 13px; }
+    #dropzone .file-name { color: var(--accent); font-weight: 500; }
+    #dropzone .file-size { color: var(--muted); font-size: 11px; margin-top: 3px; }
+
+    input[type="text"] {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 13px;
+      margin-top: 10px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="text"]::placeholder { color: #4b5563; }
+    input[type="text"]:focus { border-color: var(--accent); }
+
+    button {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 11px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-top: 10px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    button:hover { background: var(--accent-hover); }
+    button:disabled { background: var(--border); color: #4b5563; cursor: not-allowed; }
+
+    .msg {
+      font-size: 12px;
+      margin-top: 8px;
+    }
+    .msg.error { color: var(--danger); }
+    .msg.success { color: var(--success); }
+
+    /* Progress bar */
+    #progress-wrap {
+      display: none;
+      width: 100%;
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+    #progress-bar {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.2s;
+    }
+
+    /* Songs */
+    #songs-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .song-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .song-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+
+    .song-meta {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    audio {
+      width: 100%;
+      height: 32px;
+      accent-color: var(--accent);
+    }
+
+    .empty { color: var(--muted); font-size: 13px; }
+
+    .spinner {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>BOND FM</h1>
+    <p class="tagline">upload. listen. repeat.</p>
+  </header>
+
+  <!-- Upload -->
+  <section>
+    <p class="section-label">Drop a track</p>
+
+    <div id="dropzone">
+      <p id="dz-text">drag & drop an audio file, or click to browse</p>
+    </div>
+    <input type="file" id="file-input" accept="audio/*" style="display:none" />
+
+    <input type="text" id="name-input" placeholder="your name (optional — blank = anonymous)" />
+
+    <div id="progress-wrap"><div id="progress-bar"></div></div>
+    <div id="msg" class="msg"></div>
+
+    <button id="upload-btn" disabled>upload track</button>
+  </section>
+
+  <!-- Song list -->
+  <section>
+    <p class="section-label">On air</p>
+    <div id="songs-list"><p class="empty"><span class="spinner"></span>loading...</p></div>
+  </section>
+</main>
+
+<script>
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('file-input');
+  const dzText = document.getElementById('dz-text');
+  const nameInput = document.getElementById('name-input');
+  const uploadBtn = document.getElementById('upload-btn');
+  const msgEl = document.getElementById('msg');
+  const songsList = document.getElementById('songs-list');
+  const progressWrap = document.getElementById('progress-wrap');
+  const progressBar = document.getElementById('progress-bar');
+
+  let selectedFile = null;
+
+  // Drop zone
+  dropzone.addEventListener('click', () => fileInput.click());
+
+  dropzone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropzone.classList.add('drag-over');
+  });
+
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) setFile(file);
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) setFile(fileInput.files[0]);
+  });
+
+  function setFile(file) {
+    if (!file.type.startsWith('audio/')) {
+      showMsg('Audio files only.', 'error');
+      return;
+    }
+    selectedFile = file;
+    dropzone.classList.add('has-file');
+    dropzone.innerHTML = `
+      <p class="file-name">${file.name}</p>
+      <p class="file-size">${(file.size / 1024 / 1024).toFixed(1)} MB</p>
+    `;
+    uploadBtn.disabled = false;
+    showMsg('', '');
+  }
+
+  function showMsg(text, type) {
+    msgEl.textContent = text;
+    msgEl.className = 'msg' + (type ? ' ' + type : '');
+  }
+
+  // Upload
+  uploadBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = 'uploading...';
+    progressWrap.style.display = 'block';
+    progressBar.style.width = '10%';
+    showMsg('', '');
+
+    const form = new FormData();
+    form.append('file', selectedFile);
+    form.append('name', nameInput.value.trim() || 'Anonymous');
+
+    try {
+      // Fake progress
+      let p = 10;
+      const tick = setInterval(() => {
+        p = Math.min(p + Math.random() * 15, 85);
+        progressBar.style.width = p + '%';
+      }, 300);
+
+      const res = await fetch('/api/upload', { method: 'POST', body: form });
+      clearInterval(tick);
+      progressBar.style.width = '100%';
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Upload failed');
+      }
+
+      showMsg('Track uploaded.', 'success');
+      selectedFile = null;
+      nameInput.value = '';
+      dropzone.classList.remove('has-file');
+      dropzone.innerHTML = '<p id="dz-text">drag & drop an audio file, or click to browse</p>';
+      fileInput.value = '';
+
+      setTimeout(() => { progressWrap.style.display = 'none'; progressBar.style.width = '0%'; }, 800);
+      fetchSongs();
+    } catch (err) {
+      showMsg(err.message, 'error');
+      progressWrap.style.display = 'none';
+    } finally {
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = 'upload track';
+    }
+  });
+
+  // Songs
+  function formatDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
+  async function fetchSongs() {
+    try {
+      const res = await fetch('/api/songs');
+      const data = await res.json();
+      const songs = (data.songs || []).slice().reverse();
+
+      if (songs.length === 0) {
+        songsList.innerHTML = '<p class="empty">nothing here yet. be the first to upload.</p>';
+        return;
+      }
+
+      songsList.innerHTML = songs.map(s => `
+        <div class="song-card">
+          <div class="song-title">${escHtml(s.title)}</div>
+          <div class="song-meta">${escHtml(s.uploader)} &middot; ${formatDate(s.uploadedAt)}</div>
+          <audio controls preload="none">
+            <source src="${escHtml(s.url)}" />
+          </audio>
+        </div>
+      `).join('');
+    } catch {
+      songsList.innerHTML = '<p class="empty">failed to load songs.</p>';
+    }
+  }
+
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  fetchSongs();
+</script>
+</body>
+</html>
