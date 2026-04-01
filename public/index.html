@@ -207,6 +207,7 @@
     </div>
     <input type="file" id="file-input" accept="audio/*" style="display:none" />
 
+    <input type="text" id="track-input" placeholder="track name (optional — blank uses filename)" />
     <input type="text" id="name-input" placeholder="your name (optional — blank = anonymous)" />
 
     <div id="progress-wrap"><div id="progress-bar"></div></div>
@@ -226,6 +227,7 @@
   const dropzone = document.getElementById('dropzone');
   const fileInput = document.getElementById('file-input');
   const dzText = document.getElementById('dz-text');
+  const trackInput = document.getElementById('track-input');
   const nameInput = document.getElementById('name-input');
   const uploadBtn = document.getElementById('upload-btn');
   const msgEl = document.getElementById('msg');
@@ -288,6 +290,7 @@
 
     const form = new FormData();
     form.append('file', selectedFile);
+    form.append('trackName', trackInput.value.trim());
     form.append('name', nameInput.value.trim() || 'Anonymous');
 
     try {
@@ -309,6 +312,7 @@
 
       showMsg('Track uploaded.', 'success');
       selectedFile = null;
+      trackInput.value = '';
       nameInput.value = '';
       dropzone.classList.remove('has-file');
       dropzone.innerHTML = '<p id="dz-text">drag & drop an audio file, or click to browse</p>';
