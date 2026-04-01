@@ -4,30 +4,28 @@ function uuid() {
 
 export async function onRequestPost({ request, env }) {
   try {
-    const formData = await request.formData();
-    const file = formData.get("file");
-    const name = formData.get("name") || "Anonymous";
-    const trackName = formData.get("trackName") || "";
+    const url = new URL(request.url);
+    const name = url.searchParams.get("name") || "Anonymous";
+    const trackName = url.searchParams.get("trackName") || "";
+    const filename = url.searchParams.get("filename") || "track";
+    const contentType = url.searchParams.get("type") || request.headers.get("content-type") || "audio/mpeg";
 
-    if (!file || typeof file === "string") {
-      return Response.json({ error: "No file provided" }, { status: 400 });
-    }
-
-    if (!file.type.startsWith("audio/")) {
+    if (!contentType.startsWith("audio/")) {
       return Response.json({ error: "Audio files only" }, { status: 400 });
     }
 
-    if (file.size > 50 * 1024 * 1024) {
-      return Response.json({ error: "Max file size is 50MB" }, { status: 400 });
+    const body = request.body;
+    if (!body) {
+      return Response.json({ error: "No file provided" }, { status: 400 });
     }
 
     const id = uuid();
-    const ext = (file.name.split(".").pop() || "mp3").toLowerCase();
+    const ext = (filename.split(".").pop() || "mp3").toLowerCase();
     const key = `audio/${id}.${ext}`;
-    const safeTitle = trackName.trim() || file.name.replace(/[^\w.\- ]/g, "_");
+    const safeTitle = trackName.trim() || filename.replace(/[^\w.\- ]/g, "_");
 
-    await env.BUCKET.put(key, file.stream(), {
-      httpMetadata: { contentType: file.type },
+    await env.BUCKET.put(key, body, {
+      httpMetadata: { contentType },
       customMetadata: {
         id,
         title: safeTitle,

@@ -288,11 +288,6 @@
     progressBar.style.width = '10%';
     showMsg('', '');
 
-    const form = new FormData();
-    form.append('file', selectedFile);
-    form.append('trackName', trackInput.value.trim());
-    form.append('name', nameInput.value.trim() || 'Anonymous');
-
     try {
       // Fake progress
       let p = 10;
@@ -301,7 +296,17 @@
         progressBar.style.width = p + '%';
       }, 300);
 
-      const res = await fetch('/api/upload', { method: 'POST', body: form });
+      const params = new URLSearchParams({
+        name: nameInput.value.trim() || 'Anonymous',
+        trackName: trackInput.value.trim(),
+        filename: selectedFile.name,
+        type: selectedFile.type,
+      });
+      const res = await fetch(`/api/upload?${params}`, {
+        method: 'POST',
+        body: selectedFile,
+        headers: { 'Content-Type': selectedFile.type },
+      });
       clearInterval(tick);
       progressBar.style.width = '100%';
 
