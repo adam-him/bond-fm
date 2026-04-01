@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0a0a0a;
+  --accent: #a855f7;
+}
+
+body {
+  background-color: var(--bg);
+  color: #e5e7eb;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+audio {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+audio::-webkit-media-controls-panel {
+  background-color: #1a1a1a;
+}
